@@ -11,9 +11,8 @@ Built for direct use in iOS apps and for easy code generation/consumption by AI 
 
 ## Smoothing Tiers
 
-- `high` (default) -> website `easeInOutQuad`
-- `medium` -> website `easeInOutCubic`
-- `low` -> website `easeInOutQuint`
+<img width="1660" height="566" alt="Frame 4" src="https://github.com/user-attachments/assets/1b81886d-440e-405f-988c-671d998f702e" />
+
 
 ## Features
 
