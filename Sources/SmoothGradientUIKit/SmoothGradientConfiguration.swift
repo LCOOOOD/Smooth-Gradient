@@ -70,41 +70,5 @@ public struct SmoothGradientConfiguration {
         self.direction = direction
         self.fallbackMode = fallbackMode
     }
-
-    /// Deprecated compatibility property.
-    @available(*, deprecated, message: "Use smoothing instead.")
-    public var easing: SmoothEasing {
-        get {
-            switch smoothing {
-            case .high:
-                return .easeInOutQuad
-            case .medium:
-                return .easeInOutCubic
-            case .low:
-                return .easeInOutQuint
-            }
-        }
-        set {
-            smoothing = newValue.smoothing
-        }
-    }
-
-    /// Deprecated compatibility initializer.
-    @available(*, deprecated, message: "Use init(colors:steps:smoothing:direction:fallbackMode:) instead.")
-    public init(
-        colors: [UIColor],
-        steps: Int = 10,
-        easing: SmoothEasing,
-        direction: SmoothGradientDirection = .topToBottom,
-        fallbackMode: SmoothGradientFallbackMode = .automatic
-    ) {
-        self.init(
-            colors: colors,
-            steps: steps,
-            smoothing: easing.smoothing,
-            direction: direction,
-            fallbackMode: fallbackMode
-        )
-    }
 }
 #endif

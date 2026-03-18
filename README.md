@@ -11,8 +11,9 @@ Built for direct use in iOS apps and for easy code generation/consumption by AI 
 
 ## Smoothing Tiers
 
-<img width="1660" height="566" alt="Frame 4" src="https://github.com/user-attachments/assets/1b81886d-440e-405f-988c-671d998f702e" />
-
+- `high` (default) -> chart-fitted high curve
+- `medium` -> chart-fitted medium curve
+- `low` -> chart-fitted low curve
 
 ## Features
 
@@ -53,11 +54,6 @@ gradientView.setConfiguration(
 - steps resolve to 2 or less
 
 Use `.linearOnly` to force plain linear gradient.
-
-## Compatibility Notes
-
-- New API uses `smoothing`.
-- Legacy `easing` API is still available as deprecated compatibility surface, so older app code can upgrade and recompile safely.
 
 ## Public API
 

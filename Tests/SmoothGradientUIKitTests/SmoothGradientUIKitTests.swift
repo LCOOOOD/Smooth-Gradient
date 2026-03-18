@@ -50,17 +50,31 @@ struct SmoothGradientMathTests {
     }
 
     @Test
-    func smoothingTierMappingMatchesRequestedWebsiteCurves() {
-        let t = 0.25
-        #expect(SmoothGradientSmoothing.high.transform(t) == 0.125)
-        #expect(SmoothGradientSmoothing.medium.transform(t) == 0.0625)
-        #expect(SmoothGradientSmoothing.low.transform(t) == 0.015625)
+    func smoothingTiersUseChartAnchors() {
+        assertNearlyEqual(SmoothGradientSmoothing.high.transform(0.12), 0.02)
+        assertNearlyEqual(SmoothGradientSmoothing.high.transform(0.57), 0.60)
+        assertNearlyEqual(SmoothGradientSmoothing.high.transform(0.90), 0.98)
+
+        assertNearlyEqual(SmoothGradientSmoothing.medium.transform(0.24), 0.04)
+        assertNearlyEqual(SmoothGradientSmoothing.medium.transform(0.57), 0.65)
+        assertNearlyEqual(SmoothGradientSmoothing.medium.transform(0.90), 0.99)
+
+        assertNearlyEqual(SmoothGradientSmoothing.low.transform(0.24), 0.00)
+        assertNearlyEqual(SmoothGradientSmoothing.low.transform(0.57), 0.72)
+        assertNearlyEqual(SmoothGradientSmoothing.low.transform(0.90), 1.00)
     }
 
     @Test
-    func legacyEasingMapsToSmoothingTiers() {
-        #expect(SmoothEasing.easeInOutQuad.smoothing == .high)
-        #expect(SmoothEasing.easeInOutCubic.smoothing == .medium)
-        #expect(SmoothEasing.easeInOutQuint.smoothing == .low)
+    func smoothingCurveSeparationMatchesVisualExpectation() {
+        let t = 0.57
+        let high = SmoothGradientSmoothing.high.transform(t)
+        let medium = SmoothGradientSmoothing.medium.transform(t)
+        let low = SmoothGradientSmoothing.low.transform(t)
+        #expect(high < medium)
+        #expect(medium < low)
     }
+}
+
+private func assertNearlyEqual(_ lhs: Double, _ rhs: Double, eps: Double = 0.000_001) {
+    #expect(abs(lhs - rhs) < eps)
 }
