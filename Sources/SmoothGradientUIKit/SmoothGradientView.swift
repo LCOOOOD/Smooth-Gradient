@@ -141,9 +141,9 @@ public final class SmoothGradientView: UIView {
             colors = baseColors.count == 1 ? [baseColors[0], baseColors[0]] : baseColors
             locations = SmoothGradientMath.evenlySpacedLocations(count: colors.count)
         } else {
-            let sampledLocations = SmoothGradientMath.sampledLocations(steps: safeSteps, smoothing: configuration.smoothing)
-            colors = sampledLocations.map { sampleColor(in: baseColors, position: $0) }
-            locations = sampledLocations
+            let samplingPositions = SmoothGradientMath.sampledLocations(steps: safeSteps, smoothing: configuration.smoothing)
+            colors = samplingPositions.map { sampleColor(in: baseColors, position: $0) }
+            locations = SmoothGradientMath.evenlySpacedLocations(count: samplingPositions.count)
         }
 
         return GradientPayload(
