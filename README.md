@@ -51,7 +51,6 @@ gradientView.setConfiguration(
 
 - color count is less than 2
 - steps resolve to 2 or less
-- Low Power Mode is enabled
 
 Use `.linearOnly` to force plain linear gradient.
 

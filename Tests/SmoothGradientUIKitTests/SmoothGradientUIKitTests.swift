@@ -45,7 +45,7 @@ struct SmoothGradientMathTests {
     func fallbackResolutionWorksForAutomaticAndForcedModes() {
         #expect(SmoothGradientMath.shouldUseLinearFallback(mode: .linearOnly, colorCount: 3, steps: 10, lowPowerModeEnabled: false))
         #expect(SmoothGradientMath.shouldUseLinearFallback(mode: .automatic, colorCount: 1, steps: 10, lowPowerModeEnabled: false))
-        #expect(SmoothGradientMath.shouldUseLinearFallback(mode: .automatic, colorCount: 3, steps: 10, lowPowerModeEnabled: true))
+        #expect(!SmoothGradientMath.shouldUseLinearFallback(mode: .automatic, colorCount: 3, steps: 10, lowPowerModeEnabled: true))
         #expect(!SmoothGradientMath.shouldUseLinearFallback(mode: .automatic, colorCount: 3, steps: 10, lowPowerModeEnabled: false))
     }
 

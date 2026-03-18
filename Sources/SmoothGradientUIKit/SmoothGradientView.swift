@@ -124,13 +124,12 @@ public final class SmoothGradientView: UIView {
 
     private func resolvedPayload(for configuration: SmoothGradientConfiguration) -> GradientPayload {
         let safeSteps = SmoothGradientMath.clampedSteps(configuration.steps)
-        let lowPowerModeEnabled = ProcessInfo.processInfo.isLowPowerModeEnabled
 
         let useFallback = SmoothGradientMath.shouldUseLinearFallback(
             mode: configuration.fallbackMode,
             colorCount: configuration.colors.count,
             steps: safeSteps,
-            lowPowerModeEnabled: lowPowerModeEnabled
+            lowPowerModeEnabled: false
         )
 
         let baseColors = configuration.colors.isEmpty ? [UIColor.clear, UIColor.clear] : configuration.colors

@@ -102,10 +102,10 @@ public enum SmoothGradientMath {
         steps: Int,
         lowPowerModeEnabled: Bool
     ) -> Bool {
+        _ = lowPowerModeEnabled
         if mode == .linearOnly { return true }
         if colorCount < 2 { return true }
         if clampedSteps(steps) <= 2 { return true }
-        if lowPowerModeEnabled { return true }
         return false
     }
 
