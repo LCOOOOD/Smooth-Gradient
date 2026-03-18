@@ -5,7 +5,7 @@ Built for direct use in iOS apps and for easy code generation/consumption by AI 
 
 ## What This Library Is For
 
-- Render soft, film-like gradient overlays in UIKit.
+- Render soft gradient overlays in UIKit.
 - Keep API small: colors + steps + smoothing tier + direction.
 - Provide safe fallback to plain linear gradient when smoothing should not be used.
 
