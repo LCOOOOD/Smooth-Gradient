@@ -11,9 +11,9 @@ Built for direct use in iOS apps and for easy code generation/consumption by AI 
 
 ## Smoothing Tiers
 
-- `high` (default) -> chart-fitted high curve
-- `medium` -> chart-fitted medium curve
-- `low` -> chart-fitted low curve
+<img width="1660" height="566" alt="Frame 4" src="https://github.com/user-attachments/assets/3930dae4-29bb-4b20-b606-2c5c89af1a73" />
+
+
 
 ## Features
 
