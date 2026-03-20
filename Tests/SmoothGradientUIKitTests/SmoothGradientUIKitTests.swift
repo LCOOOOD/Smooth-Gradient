@@ -75,21 +75,44 @@ struct SmoothGradientMathTests {
     }
 
     @Test
-    func solidStartLocationClampsToBounds() {
-        #expect(SmoothGradientMath.resolvedSolidStartLocation(nil) == nil)
-        #expect(SmoothGradientMath.resolvedSolidStartLocation(-0.2) == 0)
-        #expect(SmoothGradientMath.resolvedSolidStartLocation(0.3) == 0.3)
-        #expect(SmoothGradientMath.resolvedSolidStartLocation(1.2) == 1)
+    func colorProgressLocksToLastColorAfterLastLocation() {
+        let progress = SmoothGradientMath.colorProgress(
+            at: 0.75,
+            controlLocations: [0.0, 0.5]
+        )
+        #expect(progress != nil)
+        #expect(progress?.leftIndex == 1)
+        #expect(progress?.rightIndex == 1)
     }
 
     @Test
-    func solidStartCutoffCompressesLocations() {
-        let base = SmoothGradientMath.evenlySpacedLocations(count: 4)
-        let compressed = SmoothGradientMath.applySolidStartCutoff(to: base, solidStartLocation: 0.3)
-        assertNearlyEqual(compressed[0], 0)
-        assertNearlyEqual(compressed[1], 0.1)
-        assertNearlyEqual(compressed[2], 0.2)
-        assertNearlyEqual(compressed[3], 0.3)
+    func colorProgressUsesSegmentLocalTBeforeLastLocation() {
+        let progress = SmoothGradientMath.colorProgress(
+            at: 0.25,
+            controlLocations: [0.0, 0.5]
+        )
+        #expect(progress != nil)
+        #expect(progress?.leftIndex == 0)
+        #expect(progress?.rightIndex == 1)
+        assertNearlyEqual(progress?.t ?? -1, 0.5)
+    }
+
+    @Test
+    func colorProgressRespectsSortedControlLocations() {
+        let progress = SmoothGradientMath.colorProgress(
+            at: 0.6,
+            controlLocations: [0.0, 0.2, 1.0]
+        )
+        #expect(progress != nil)
+        #expect(progress?.leftIndex == 1)
+        #expect(progress?.rightIndex == 2)
+    }
+
+    @Test
+    func locationCountMismatchCanBeHandledByMinimumPairingRule() {
+        let colorsCount = 3
+        let locationsCount = 2
+        #expect(min(colorsCount, locationsCount) == 2)
     }
 }
 

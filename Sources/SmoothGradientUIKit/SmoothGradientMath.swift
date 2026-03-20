@@ -60,6 +60,12 @@ public enum SmoothGradientFallbackMode: Equatable {
 
 /// Math helpers for stop sampling and fallback decisions.
 public enum SmoothGradientMath {
+    struct ColorProgress {
+        let leftIndex: Int
+        let rightIndex: Int
+        let t: Double
+    }
+
     /// Minimum supported number of sampled stops.
     public static let minSteps = 2
     /// Maximum supported number of sampled stops.
@@ -103,16 +109,35 @@ public enum SmoothGradientMath {
         return false
     }
 
-    static func resolvedSolidStartLocation(_ value: Double?) -> Double? {
-        guard let value else { return nil }
-        return min(max(value, 0), 1)
-    }
+    static func colorProgress(
+        at position: Double,
+        controlLocations: [Double]
+    ) -> ColorProgress? {
+        guard controlLocations.count > 1 else { return nil }
+        let x = min(max(position, 0), 1)
+        let lastIndex = controlLocations.count - 1
 
-    static func applySolidStartCutoff(
-        to locations: [Double],
-        solidStartLocation: Double
-    ) -> [Double] {
-        locations.map { min(max($0, 0), 1) * solidStartLocation }
+        if x <= controlLocations[0] {
+            return ColorProgress(leftIndex: 0, rightIndex: 0, t: 0)
+        }
+        if x >= controlLocations[lastIndex] {
+            return ColorProgress(leftIndex: lastIndex, rightIndex: lastIndex, t: 0)
+        }
+
+        for idx in 1..<controlLocations.count {
+            let left = controlLocations[idx - 1]
+            let right = controlLocations[idx]
+            if x <= right {
+                let dx = right - left
+                if dx == 0 {
+                    return ColorProgress(leftIndex: idx, rightIndex: idx, t: 0)
+                }
+                let t = min(max((x - left) / dx, 0), 1)
+                return ColorProgress(leftIndex: idx - 1, rightIndex: idx, t: t)
+            }
+        }
+
+        return ColorProgress(leftIndex: lastIndex, rightIndex: lastIndex, t: 0)
     }
 
     static func evenlySpacedLocations(count: Int) -> [Double] {

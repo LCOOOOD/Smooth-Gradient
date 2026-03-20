@@ -42,37 +42,37 @@ import UIKit
 /// Public configuration for `SmoothGradientView`.
 public struct SmoothGradientConfiguration {
     public var colors: [UIColor]
+    public var locations: [CGFloat]
     public var steps: Int
     public var smoothing: SmoothGradientSmoothing
     public var direction: SmoothGradientDirection
     public var fallbackMode: SmoothGradientFallbackMode
-    public var solidStartLocation: CGFloat?
 
     /// - Parameters:
     ///   - colors: Input color keyframes. At least two colors are recommended.
+    ///   - locations: Per-color locations in [0, 1]. Length mismatch is resolved by taking the minimum count.
     ///   - steps: Sampling count for generated gradient stops. Default is `10`.
     ///   - smoothing: Smoothing tier. Default is `.high`.
     ///   - direction: Gradient direction in unit coordinates.
     ///   - fallbackMode: Fallback strategy for linear gradient.
-    ///   - solidStartLocation: Optional cutoff in [0, 1] where the gradient turns to pure `colors.last`. Default is `0.3`.
     public init(
         colors: [UIColor] = [
             UIColor(red: 0.98, green: 0.55, blue: 0.45, alpha: 1),
             UIColor(red: 0.98, green: 0.78, blue: 0.45, alpha: 1),
             UIColor(red: 0.56, green: 0.82, blue: 0.98, alpha: 1)
         ],
+        locations: [CGFloat] = [0, 0.5, 1],
         steps: Int = 10,
         smoothing: SmoothGradientSmoothing = .high,
         direction: SmoothGradientDirection = .topToBottom,
-        fallbackMode: SmoothGradientFallbackMode = .automatic,
-        solidStartLocation: CGFloat? = 0.3
+        fallbackMode: SmoothGradientFallbackMode = .automatic
     ) {
         self.colors = colors
+        self.locations = locations
         self.steps = steps
         self.smoothing = smoothing
         self.direction = direction
         self.fallbackMode = fallbackMode
-        self.solidStartLocation = solidStartLocation
     }
 }
 #endif

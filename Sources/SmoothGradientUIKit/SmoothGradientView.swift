@@ -64,6 +64,18 @@ public final class SmoothGradientView: UIView {
         setConfiguration(next, animated: animated, duration: duration, timing: timing)
     }
 
+    /// Convenience API to update only stop locations.
+    public func setLocations(
+        _ locations: [CGFloat],
+        animated: Bool = true,
+        duration: TimeInterval = 0.35,
+        timing: CAMediaTimingFunctionName = .easeInEaseOut
+    ) {
+        var next = configuration
+        next.locations = locations
+        setConfiguration(next, animated: animated, duration: duration, timing: timing)
+    }
+
     /// Convenience API to update only direction.
     public func setDirection(
         _ direction: SmoothGradientDirection,
@@ -73,18 +85,6 @@ public final class SmoothGradientView: UIView {
     ) {
         var next = configuration
         next.direction = direction
-        setConfiguration(next, animated: animated, duration: duration, timing: timing)
-    }
-
-    /// Convenience API to update only solid area cutoff.
-    public func setSolidStartLocation(
-        _ solidStartLocation: CGFloat?,
-        animated: Bool = true,
-        duration: TimeInterval = 0.35,
-        timing: CAMediaTimingFunctionName = .easeInEaseOut
-    ) {
-        var next = configuration
-        next.solidStartLocation = solidStartLocation
         setConfiguration(next, animated: animated, duration: duration, timing: timing)
     }
 
@@ -136,37 +136,35 @@ public final class SmoothGradientView: UIView {
 
     private func resolvedPayload(for configuration: SmoothGradientConfiguration) -> GradientPayload {
         let safeSteps = SmoothGradientMath.clampedSteps(configuration.steps)
+        let controls = normalizedControls(colors: configuration.colors, locations: configuration.locations)
 
         let useFallback = SmoothGradientMath.shouldUseLinearFallback(
             mode: configuration.fallbackMode,
-            colorCount: configuration.colors.count,
+            colorCount: controls.count,
             steps: safeSteps,
             lowPowerModeEnabled: false
         )
-
-        let baseColors = configuration.colors.isEmpty ? [UIColor.clear, UIColor.clear] : configuration.colors
 
         var colors: [UIColor]
         var locations: [Double]
 
         if useFallback {
-            colors = baseColors.count == 1 ? [baseColors[0], baseColors[0]] : baseColors
-            locations = SmoothGradientMath.evenlySpacedLocations(count: colors.count)
+            if controls.count >= 2 {
+                colors = controls.map(\.color)
+                locations = controls.map(\.location)
+            } else {
+                let baseColors = configuration.colors.isEmpty ? [UIColor.clear, UIColor.clear] : configuration.colors
+                colors = baseColors.count == 1 ? [baseColors[0], baseColors[0]] : baseColors
+                locations = SmoothGradientMath.evenlySpacedLocations(count: colors.count)
+            }
         } else {
-            let samplingPositions = SmoothGradientMath.sampledLocations(steps: safeSteps, smoothing: configuration.smoothing)
-            colors = samplingPositions.map { sampleColor(in: baseColors, position: $0) }
-            locations = SmoothGradientMath.evenlySpacedLocations(count: samplingPositions.count)
-        }
-
-        if let solidStart = SmoothGradientMath.resolvedSolidStartLocation(
-            configuration.solidStartLocation.map(Double.init)
-        ) {
-            locations = SmoothGradientMath.applySolidStartCutoff(
-                to: locations,
-                solidStartLocation: solidStart
-            )
-            if !colors.isEmpty, let solidColor = baseColors.last {
-                colors[colors.count - 1] = solidColor
+            locations = SmoothGradientMath.evenlySpacedLocations(count: safeSteps)
+            colors = locations.map { position in
+                sampledColor(
+                    at: position,
+                    controls: controls,
+                    smoothing: configuration.smoothing
+                )
             }
         }
 
@@ -178,18 +176,58 @@ public final class SmoothGradientView: UIView {
         )
     }
 
-    private func sampleColor(in colors: [UIColor], position: Double) -> UIColor {
-        guard colors.count > 1 else { return colors.first ?? .clear }
+    private func normalizedControls(
+        colors: [UIColor],
+        locations: [CGFloat]
+    ) -> [(color: UIColor, location: Double)] {
+        let count = min(colors.count, locations.count)
+        guard count > 0 else { return [] }
 
-        let clampedPosition = min(max(position, 0), 1)
-        let segmentCount = colors.count - 1
-        let scaled = clampedPosition * Double(segmentCount)
-        let lowerIndex = min(Int(floor(scaled)), segmentCount - 1)
-        let upperIndex = lowerIndex + 1
-        let localT = CGFloat(scaled - Double(lowerIndex))
+        var pairs = [(color: UIColor, location: Double)]()
+        pairs.reserveCapacity(count)
 
-        let a = rgba(from: colors[lowerIndex])
-        let b = rgba(from: colors[upperIndex])
+        for idx in 0..<count {
+            let clamped = min(max(Double(locations[idx]), 0), 1)
+            pairs.append((colors[idx], clamped))
+        }
+
+        return pairs.sorted { $0.location < $1.location }
+    }
+
+    private func sampledColor(
+        at position: Double,
+        controls: [(color: UIColor, location: Double)],
+        smoothing: SmoothGradientSmoothing
+    ) -> UIColor {
+        guard !controls.isEmpty else { return .clear }
+        guard controls.count > 1 else { return controls[0].color }
+
+        let controlLocations = controls.map(\.location)
+        guard let progress = SmoothGradientMath.colorProgress(at: position, controlLocations: controlLocations) else {
+            return controls[0].color
+        }
+
+        if progress.leftIndex == progress.rightIndex {
+            return controls[progress.leftIndex].color
+        }
+
+        let leftColor = controls[progress.leftIndex].color
+        let rightColor = controls[progress.rightIndex].color
+        return sampleColorPair(
+            from: leftColor,
+            to: rightColor,
+            t: smoothing.transform(progress.t)
+        )
+    }
+
+    private func sampleColorPair(
+        from leftColor: UIColor,
+        to rightColor: UIColor,
+        t: Double
+    ) -> UIColor {
+        let a = rgba(from: leftColor)
+        let b = rgba(from: rightColor)
+        let localT = CGFloat(min(max(t, 0), 1))
 
         return UIColor(
             red: a.r + (b.r - a.r) * localT,

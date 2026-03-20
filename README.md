@@ -11,14 +11,14 @@ Built for direct use in iOS apps and for easy code generation/consumption by AI 
 
 ## Smoothing Tiers
 
-<img width="1660" height="566" alt="Frame 4" src="https://github.com/user-attachments/assets/3930dae4-29bb-4b20-b606-2c5c89af1a73" />
-
-
+- `high` (default) -> chart-fitted high curve
+- `medium` -> chart-fitted medium curve
+- `low` -> chart-fitted low curve
 
 ## Features
 
 - `SmoothGradientView: UIView`
-- Configurable `steps` (default `10`), `smoothing` (`high`/`medium`/`low`), colors, direction, and coverage cutoff
+- Configurable `steps` (default `10`), `smoothing` (`high`/`medium`/`low`), `colors`, `locations`, and direction
 - Animated updates via `setConfiguration(_:animated:duration:timing:)`
 - Automatic fallback to linear gradient when needed (`fallbackMode`)
 - iOS 13+ Swift Package
@@ -36,23 +36,24 @@ import SmoothGradientUIKit
 let gradientView = SmoothGradientView()
 gradientView.setConfiguration(
     SmoothGradientConfiguration(
-        colors: [.systemPink, .systemOrange, .systemTeal],
+        colors: [.clear, .systemPink, .white],
+        locations: [0.0, 0.28, 1.0],
         steps: 10,
         smoothing: .high,
         direction: .topLeftToBottomRight,
-        fallbackMode: .automatic,
-        solidStartLocation: 0.3
+        fallbackMode: .automatic
     ),
     animated: true
 )
 ```
 
-## Coverage Control
+## Color + Location Mode
 
-- `solidStartLocation` controls where pure solid color starts along `start -> end`.
-- Default is `0.3` (enabled by default).
-- The solid color is always `colors.last`.
-- Set `solidStartLocation = nil` to disable cutoff and use full smooth gradient.
+- `colors[i]` pairs with `locations[i]`.
+- Locations are clamped into `[0, 1]`.
+- Input can be unordered; the renderer sorts by location.
+- If lengths differ, only the minimum count is used for pairing.
+- Area beyond the last location keeps the last color (e.g. `colors=[clear, white]`, `locations=[0, 0.5]` means `0.5...1` is pure white).
 
 ## Fallback Behavior
 
