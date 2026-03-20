@@ -5,19 +5,20 @@ Built for direct use in iOS apps and for easy code generation/consumption by AI 
 
 ## What This Library Is For
 
-- Render soft gradient overlays in UIKit.
+- Render soft, film-like gradient overlays in UIKit.
 - Keep API small: colors + steps + smoothing tier + direction.
 - Provide safe fallback to plain linear gradient when smoothing should not be used.
 
 ## Smoothing Tiers
 
-
-<img width="1660" height="566" alt="Frame 4" src="https://github.com/user-attachments/assets/96fd49ca-cec2-4378-bc05-c65902349a0b" />
+- `high` (default) -> chart-fitted high curve
+- `medium` -> chart-fitted medium curve
+- `low` -> chart-fitted low curve
 
 ## Features
 
 - `SmoothGradientView: UIView`
-- Configurable `steps` (default `10`), `smoothing` (`high`/`medium`/`low`), colors, and direction
+- Configurable `steps` (default `10`), `smoothing` (`high`/`medium`/`low`), colors, direction, and coverage cutoff
 - Animated updates via `setConfiguration(_:animated:duration:timing:)`
 - Automatic fallback to linear gradient when needed (`fallbackMode`)
 - iOS 13+ Swift Package
@@ -39,11 +40,19 @@ gradientView.setConfiguration(
         steps: 10,
         smoothing: .high,
         direction: .topLeftToBottomRight,
-        fallbackMode: .automatic
+        fallbackMode: .automatic,
+        solidStartLocation: 0.3
     ),
     animated: true
 )
 ```
+
+## Coverage Control
+
+- `solidStartLocation` controls where pure solid color starts along `start -> end`.
+- Default is `0.3` (enabled by default).
+- The solid color is always `colors.last`.
+- Set `solidStartLocation = nil` to disable cutoff and use full smooth gradient.
 
 ## Fallback Behavior
 

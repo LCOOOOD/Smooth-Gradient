@@ -103,6 +103,18 @@ public enum SmoothGradientMath {
         return false
     }
 
+    static func resolvedSolidStartLocation(_ value: Double?) -> Double? {
+        guard let value else { return nil }
+        return min(max(value, 0), 1)
+    }
+
+    static func applySolidStartCutoff(
+        to locations: [Double],
+        solidStartLocation: Double
+    ) -> [Double] {
+        locations.map { min(max($0, 0), 1) * solidStartLocation }
+    }
+
     static func evenlySpacedLocations(count: Int) -> [Double] {
         guard count > 1 else { return [0, 1] }
         let maxIndex = Double(count - 1)

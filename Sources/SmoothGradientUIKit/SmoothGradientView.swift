@@ -76,6 +76,18 @@ public final class SmoothGradientView: UIView {
         setConfiguration(next, animated: animated, duration: duration, timing: timing)
     }
 
+    /// Convenience API to update only solid area cutoff.
+    public func setSolidStartLocation(
+        _ solidStartLocation: CGFloat?,
+        animated: Bool = true,
+        duration: TimeInterval = 0.35,
+        timing: CAMediaTimingFunctionName = .easeInEaseOut
+    ) {
+        var next = configuration
+        next.solidStartLocation = solidStartLocation
+        setConfiguration(next, animated: animated, duration: duration, timing: timing)
+    }
+
     private func commonInit() {
         isOpaque = false
         applyConfiguration(animated: false, duration: 0, timing: .linear)
@@ -134,8 +146,8 @@ public final class SmoothGradientView: UIView {
 
         let baseColors = configuration.colors.isEmpty ? [UIColor.clear, UIColor.clear] : configuration.colors
 
-        let colors: [UIColor]
-        let locations: [Double]
+        var colors: [UIColor]
+        var locations: [Double]
 
         if useFallback {
             colors = baseColors.count == 1 ? [baseColors[0], baseColors[0]] : baseColors
@@ -144,6 +156,18 @@ public final class SmoothGradientView: UIView {
             let samplingPositions = SmoothGradientMath.sampledLocations(steps: safeSteps, smoothing: configuration.smoothing)
             colors = samplingPositions.map { sampleColor(in: baseColors, position: $0) }
             locations = SmoothGradientMath.evenlySpacedLocations(count: samplingPositions.count)
+        }
+
+        if let solidStart = SmoothGradientMath.resolvedSolidStartLocation(
+            configuration.solidStartLocation.map(Double.init)
+        ) {
+            locations = SmoothGradientMath.applySolidStartCutoff(
+                to: locations,
+                solidStartLocation: solidStart
+            )
+            if !colors.isEmpty, let solidColor = baseColors.last {
+                colors[colors.count - 1] = solidColor
+            }
         }
 
         return GradientPayload(

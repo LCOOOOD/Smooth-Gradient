@@ -46,6 +46,7 @@ public struct SmoothGradientConfiguration {
     public var smoothing: SmoothGradientSmoothing
     public var direction: SmoothGradientDirection
     public var fallbackMode: SmoothGradientFallbackMode
+    public var solidStartLocation: CGFloat?
 
     /// - Parameters:
     ///   - colors: Input color keyframes. At least two colors are recommended.
@@ -53,6 +54,7 @@ public struct SmoothGradientConfiguration {
     ///   - smoothing: Smoothing tier. Default is `.high`.
     ///   - direction: Gradient direction in unit coordinates.
     ///   - fallbackMode: Fallback strategy for linear gradient.
+    ///   - solidStartLocation: Optional cutoff in [0, 1] where the gradient turns to pure `colors.last`. Default is `0.3`.
     public init(
         colors: [UIColor] = [
             UIColor(red: 0.98, green: 0.55, blue: 0.45, alpha: 1),
@@ -62,13 +64,15 @@ public struct SmoothGradientConfiguration {
         steps: Int = 10,
         smoothing: SmoothGradientSmoothing = .high,
         direction: SmoothGradientDirection = .topToBottom,
-        fallbackMode: SmoothGradientFallbackMode = .automatic
+        fallbackMode: SmoothGradientFallbackMode = .automatic,
+        solidStartLocation: CGFloat? = 0.3
     ) {
         self.colors = colors
         self.steps = steps
         self.smoothing = smoothing
         self.direction = direction
         self.fallbackMode = fallbackMode
+        self.solidStartLocation = solidStartLocation
     }
 }
 #endif

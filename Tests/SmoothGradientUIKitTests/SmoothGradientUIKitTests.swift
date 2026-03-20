@@ -73,6 +73,24 @@ struct SmoothGradientMathTests {
         #expect(high < medium)
         #expect(medium < low)
     }
+
+    @Test
+    func solidStartLocationClampsToBounds() {
+        #expect(SmoothGradientMath.resolvedSolidStartLocation(nil) == nil)
+        #expect(SmoothGradientMath.resolvedSolidStartLocation(-0.2) == 0)
+        #expect(SmoothGradientMath.resolvedSolidStartLocation(0.3) == 0.3)
+        #expect(SmoothGradientMath.resolvedSolidStartLocation(1.2) == 1)
+    }
+
+    @Test
+    func solidStartCutoffCompressesLocations() {
+        let base = SmoothGradientMath.evenlySpacedLocations(count: 4)
+        let compressed = SmoothGradientMath.applySolidStartCutoff(to: base, solidStartLocation: 0.3)
+        assertNearlyEqual(compressed[0], 0)
+        assertNearlyEqual(compressed[1], 0.1)
+        assertNearlyEqual(compressed[2], 0.2)
+        assertNearlyEqual(compressed[3], 0.3)
+    }
 }
 
 private func assertNearlyEqual(_ lhs: Double, _ rhs: Double, eps: Double = 0.000_001) {
