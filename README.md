@@ -10,10 +10,8 @@ Built for direct use in iOS apps and for easy code generation/consumption by AI 
 - Provide safe fallback to plain linear gradient when smoothing should not be used.
 
 ## Smoothing Tiers
+<img width="1660" height="566" alt="Frame 4" src="https://github.com/user-attachments/assets/cdbce249-6bdc-4af0-a40d-92c50023101d" />
 
-- `high` (default) -> chart-fitted high curve
-- `medium` -> chart-fitted medium curve
-- `low` -> chart-fitted low curve
 
 ## Features
 
