@@ -10,6 +10,7 @@ Built for direct use in iOS apps and for easy code generation/consumption by AI 
 - Fail fast on invalid inputs during development.
 
 ## Curve Presets
+<img width="1660" height="566" alt="Frame 4" src="https://github.com/user-attachments/assets/34586784-1837-44f5-979c-76e347ea9ba7" />
 
 | Preset | Cubic Parameters |
 | --- | --- |
