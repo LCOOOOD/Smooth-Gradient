@@ -44,17 +44,15 @@ public struct SmoothGradientConfiguration {
     public var colors: [UIColor]
     public var locations: [CGFloat]
     public var steps: Int
-    public var smoothing: SmoothGradientSmoothing
+    public var curve: SmoothGradientCubic
     public var direction: SmoothGradientDirection
-    public var fallbackMode: SmoothGradientFallbackMode
 
     /// - Parameters:
-    ///   - colors: Input color keyframes. At least two colors are recommended.
+    ///   - colors: Input color keyframes.
     ///   - locations: Per-color locations in [0, 1]. Length mismatch is resolved by taking the minimum count.
-    ///   - steps: Sampling count for generated gradient stops. Default is `10`.
-    ///   - smoothing: Smoothing tier. Default is `.high`.
+    ///   - steps: Sampling count for generated gradient stops. Range is [2, 64]. Default is `10`.
+    ///   - curve: Cubic curve resolver. Default is `.high` preset.
     ///   - direction: Gradient direction in unit coordinates.
-    ///   - fallbackMode: Fallback strategy for linear gradient.
     public init(
         colors: [UIColor] = [
             UIColor(red: 0.98, green: 0.55, blue: 0.45, alpha: 1),
@@ -63,16 +61,31 @@ public struct SmoothGradientConfiguration {
         ],
         locations: [CGFloat] = [0, 0.5, 1],
         steps: Int = 10,
-        smoothing: SmoothGradientSmoothing = .high,
-        direction: SmoothGradientDirection = .topToBottom,
-        fallbackMode: SmoothGradientFallbackMode = .automatic
+        curve: SmoothGradientCubic = SmoothGradientCurvePreset.high.cubic,
+        direction: SmoothGradientDirection = .topToBottom
     ) {
         self.colors = colors
         self.locations = locations
         self.steps = steps
-        self.smoothing = smoothing
+        self.curve = curve
         self.direction = direction
-        self.fallbackMode = fallbackMode
+    }
+
+    /// Convenience initializer using named presets.
+    public init(
+        colors: [UIColor],
+        locations: [CGFloat],
+        steps: Int = 10,
+        preset: SmoothGradientCurvePreset,
+        direction: SmoothGradientDirection = .topToBottom
+    ) {
+        self.init(
+            colors: colors,
+            locations: locations,
+            steps: steps,
+            curve: preset.cubic,
+            direction: direction
+        )
     }
 }
 #endif

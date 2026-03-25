@@ -1,24 +1,28 @@
 # SmoothGradientUIKit
 
-A UIKit `UIView` component that reproduces smooth gradient overlays by sampling linear gradient stops.
+A UIKit `UIView` component for smooth gradient overlays driven by cubic-bezier interpolation.
 Built for direct use in iOS apps and for easy code generation/consumption by AI tools.
 
 ## What This Library Is For
 
 - Render soft, film-like gradient overlays in UIKit.
-- Keep API small: colors + steps + smoothing tier + direction.
-- Provide safe fallback to plain linear gradient when smoothing should not be used.
+- Keep API small: `colors + locations + steps + curve + direction`.
+- Fail fast on invalid inputs during development.
 
-## Smoothing Tiers
-<img width="1660" height="566" alt="Frame 4" src="https://github.com/user-attachments/assets/cdbce249-6bdc-4af0-a40d-92c50023101d" />
+## Curve Presets
 
+| Preset | Cubic Parameters |
+| --- | --- |
+| `high` | `cubic-bezier(0.455, 0.030, 0.515, 0.955)` |
+| `medium` | `cubic-bezier(0.645, 0.045, 0.355, 1.000)` |
+| `low` | `cubic-bezier(0.830, 0.000, 0.170, 1.000)` |
 
 ## Features
 
 - `SmoothGradientView: UIView`
-- Configurable `steps` (default `10`), `smoothing` (`high`/`medium`/`low`), `colors`, `locations`, and direction
+- Configurable `steps` (default `10`), `curve`, `colors`, `locations`, and direction
+- Named presets (`high`/`medium`/`low`) + custom cubic curve
 - Animated updates via `setConfiguration(_:animated:duration:timing:)`
-- Automatic fallback to linear gradient when needed (`fallbackMode`)
 - iOS 13+ Swift Package
 
 ## Install
@@ -37,12 +41,18 @@ gradientView.setConfiguration(
         colors: [.clear, .systemPink, .white],
         locations: [0.0, 0.28, 1.0],
         steps: 10,
-        smoothing: .high,
-        direction: .topLeftToBottomRight,
-        fallbackMode: .automatic
+        curve: SmoothGradientCurvePreset.high.cubic,
+        direction: .topLeftToBottomRight
     ),
     animated: true
 )
+```
+
+## Custom Cubic Curve
+
+```swift
+let custom = SmoothGradientCubic(x1: 0.42, y1: 0.0, x2: 0.58, y2: 1.0)
+gradientView.setCurve(custom, animated: true)
 ```
 
 ## Color + Location Mode
@@ -53,20 +63,21 @@ gradientView.setConfiguration(
 - If lengths differ, only the minimum count is used for pairing.
 - Area beyond the last location keeps the last color (e.g. `colors=[clear, white]`, `locations=[0, 0.5]` means `0.5...1` is pure white).
 
-## Fallback Behavior
+## Input Validation (Fail Fast)
 
-`fallbackMode = .automatic` will use plain linear gradient when:
+The renderer uses `precondition` checks for invalid configuration:
 
-- color count is less than 2
-- steps resolve to 2 or less
-
-Use `.linearOnly` to force plain linear gradient.
+- `colors.count >= 2`
+- `locations.count >= 2`
+- `min(colors.count, locations.count) >= 2`
+- `steps` in `[2, 64]`
+- cubic `x1/x2` in `[0, 1]`
 
 ## Public API
 
 - `SmoothGradientView`
 - `SmoothGradientConfiguration`
 - `SmoothGradientDirection`
-- `SmoothGradientSmoothing`
-- `SmoothGradientFallbackMode`
+- `SmoothGradientCubic`
+- `SmoothGradientCurvePreset`
 - `SmoothGradientMath`

@@ -76,6 +76,28 @@ public final class SmoothGradientView: UIView {
         setConfiguration(next, animated: animated, duration: duration, timing: timing)
     }
 
+    /// Convenience API to update only curve.
+    public func setCurve(
+        _ curve: SmoothGradientCubic,
+        animated: Bool = true,
+        duration: TimeInterval = 0.35,
+        timing: CAMediaTimingFunctionName = .easeInEaseOut
+    ) {
+        var next = configuration
+        next.curve = curve
+        setConfiguration(next, animated: animated, duration: duration, timing: timing)
+    }
+
+    /// Convenience API to update only named curve preset.
+    public func setCurvePreset(
+        _ preset: SmoothGradientCurvePreset,
+        animated: Bool = true,
+        duration: TimeInterval = 0.35,
+        timing: CAMediaTimingFunctionName = .easeInEaseOut
+    ) {
+        setCurve(preset.cubic, animated: animated, duration: duration, timing: timing)
+    }
+
     /// Convenience API to update only direction.
     public func setDirection(
         _ direction: SmoothGradientDirection,
@@ -135,42 +157,25 @@ public final class SmoothGradientView: UIView {
     }
 
     private func resolvedPayload(for configuration: SmoothGradientConfiguration) -> GradientPayload {
-        let safeSteps = SmoothGradientMath.clampedSteps(configuration.steps)
+        precondition(configuration.colors.count >= 2, "SmoothGradientConfiguration.colors must contain at least 2 colors")
+        precondition(configuration.locations.count >= 2, "SmoothGradientConfiguration.locations must contain at least 2 values")
+
+        let safeSteps = SmoothGradientMath.validatedSteps(configuration.steps)
         let controls = normalizedControls(colors: configuration.colors, locations: configuration.locations)
+        precondition(controls.count >= 2, "Matched color/location control points must contain at least 2 values")
 
-        let useFallback = SmoothGradientMath.shouldUseLinearFallback(
-            mode: configuration.fallbackMode,
-            colorCount: controls.count,
-            steps: safeSteps,
-            lowPowerModeEnabled: false
-        )
-
-        var colors: [UIColor]
-        var locations: [Double]
-
-        if useFallback {
-            if controls.count >= 2 {
-                colors = controls.map(\.color)
-                locations = controls.map(\.location)
-            } else {
-                let baseColors = configuration.colors.isEmpty ? [UIColor.clear, UIColor.clear] : configuration.colors
-                colors = baseColors.count == 1 ? [baseColors[0], baseColors[0]] : baseColors
-                locations = SmoothGradientMath.evenlySpacedLocations(count: colors.count)
-            }
-        } else {
-            locations = SmoothGradientMath.evenlySpacedLocations(count: safeSteps)
-            colors = locations.map { position in
-                sampledColor(
-                    at: position,
-                    controls: controls,
-                    smoothing: configuration.smoothing
-                )
-            }
+        let sampledLocations = SmoothGradientMath.sampledLocations(steps: safeSteps)
+        let sampledColors = sampledLocations.map { position in
+            sampledColor(
+                at: position,
+                controls: controls,
+                curve: configuration.curve
+            )
         }
 
         return GradientPayload(
-            colors: colors.map(\.cgColor),
-            locations: locations.map(NSNumber.init(value:)),
+            colors: sampledColors.map(\.cgColor),
+            locations: sampledLocations.map(NSNumber.init(value:)),
             startPoint: configuration.direction.startPoint,
             endPoint: configuration.direction.endPoint
         )
@@ -197,14 +202,11 @@ public final class SmoothGradientView: UIView {
     private func sampledColor(
         at position: Double,
         controls: [(color: UIColor, location: Double)],
-        smoothing: SmoothGradientSmoothing
+        curve: SmoothGradientCubic
     ) -> UIColor {
-        guard !controls.isEmpty else { return .clear }
-        guard controls.count > 1 else { return controls[0].color }
-
         let controlLocations = controls.map(\.location)
         guard let progress = SmoothGradientMath.colorProgress(at: position, controlLocations: controlLocations) else {
-            return controls[0].color
+            preconditionFailure("Expected at least two control locations")
         }
 
         if progress.leftIndex == progress.rightIndex {
@@ -216,7 +218,7 @@ public final class SmoothGradientView: UIView {
         return sampleColorPair(
             from: leftColor,
             to: rightColor,
-            t: smoothing.transform(progress.t)
+            t: Double(curve.transform(CGFloat(progress.t)))
         )
     }
 

@@ -1,30 +1,37 @@
+import CoreGraphics
 import Testing
 @testable import SmoothGradientUIKit
 
 struct SmoothGradientMathTests {
     @Test
-    func smoothingEndpointsAreStable() {
-        for smoothing in SmoothGradientSmoothing.allCases {
-            #expect(smoothing.transform(0) == 0)
-            #expect(smoothing.transform(1) == 1)
+    func cubicEndpointsAreStable() {
+        for preset in SmoothGradientCurvePreset.allCases {
+            let curve = preset.cubic
+            #expect(curve.transform(0) == 0)
+            #expect(curve.transform(1) == 1)
         }
     }
 
     @Test
-    func smoothingOutputStaysInBounds() {
-        let samples = stride(from: 0.0, through: 1.0, by: 0.05)
-        for smoothing in SmoothGradientSmoothing.allCases {
-            for t in samples {
-                let value = smoothing.transform(t)
+    func cubicOutputIsMonotonicAndInBounds() {
+        for preset in SmoothGradientCurvePreset.allCases {
+            let curve = preset.cubic
+            var previous: CGFloat = 0
+
+            for step in 0...100 {
+                let t = CGFloat(step) / 100
+                let value = curve.transform(t)
                 #expect(value >= 0)
                 #expect(value <= 1)
+                #expect(value >= previous)
+                previous = value
             }
         }
     }
 
     @Test
     func sampledLocationsHaveExpectedShape() {
-        let locations = SmoothGradientMath.sampledLocations(steps: 10, smoothing: .high)
+        let locations = SmoothGradientMath.sampledLocations(steps: 10)
         #expect(locations.count == 10)
         #expect(locations.first == 0)
         #expect(locations.last == 1)
@@ -35,41 +42,33 @@ struct SmoothGradientMathTests {
     }
 
     @Test
-    func stepsAreClampedToAllowedRange() {
-        #expect(SmoothGradientMath.clampedSteps(1) == 2)
-        #expect(SmoothGradientMath.clampedSteps(10) == 10)
-        #expect(SmoothGradientMath.clampedSteps(1000) == 64)
+    func presetCurvesRemainCloseToLegacyAnchors() {
+        assertCurveApproximation(
+            SmoothGradientCurvePreset.high.cubic,
+            anchors: [(0.12, 0.02), (0.24, 0.10), (0.35, 0.22), (0.46, 0.40), (0.57, 0.60), (0.68, 0.78), (0.79, 0.90), (0.90, 0.98)],
+            maxError: 0.08,
+            rmseLimit: 0.055
+        )
+        assertCurveApproximation(
+            SmoothGradientCurvePreset.medium.cubic,
+            anchors: [(0.12, 0.00), (0.24, 0.04), (0.35, 0.15), (0.46, 0.35), (0.57, 0.65), (0.68, 0.85), (0.79, 0.95), (0.90, 0.99)],
+            maxError: 0.08,
+            rmseLimit: 0.055
+        )
+        assertCurveApproximation(
+            SmoothGradientCurvePreset.low.cubic,
+            anchors: [(0.12, 0.00), (0.24, 0.00), (0.35, 0.06), (0.46, 0.28), (0.57, 0.72), (0.68, 0.93), (0.79, 0.99), (0.90, 1.00)],
+            maxError: 0.08,
+            rmseLimit: 0.055
+        )
     }
 
     @Test
-    func fallbackResolutionWorksForAutomaticAndForcedModes() {
-        #expect(SmoothGradientMath.shouldUseLinearFallback(mode: .linearOnly, colorCount: 3, steps: 10, lowPowerModeEnabled: false))
-        #expect(SmoothGradientMath.shouldUseLinearFallback(mode: .automatic, colorCount: 1, steps: 10, lowPowerModeEnabled: false))
-        #expect(!SmoothGradientMath.shouldUseLinearFallback(mode: .automatic, colorCount: 3, steps: 10, lowPowerModeEnabled: true))
-        #expect(!SmoothGradientMath.shouldUseLinearFallback(mode: .automatic, colorCount: 3, steps: 10, lowPowerModeEnabled: false))
-    }
-
-    @Test
-    func smoothingTiersUseChartAnchors() {
-        assertNearlyEqual(SmoothGradientSmoothing.high.transform(0.12), 0.02)
-        assertNearlyEqual(SmoothGradientSmoothing.high.transform(0.57), 0.60)
-        assertNearlyEqual(SmoothGradientSmoothing.high.transform(0.90), 0.98)
-
-        assertNearlyEqual(SmoothGradientSmoothing.medium.transform(0.24), 0.04)
-        assertNearlyEqual(SmoothGradientSmoothing.medium.transform(0.57), 0.65)
-        assertNearlyEqual(SmoothGradientSmoothing.medium.transform(0.90), 0.99)
-
-        assertNearlyEqual(SmoothGradientSmoothing.low.transform(0.24), 0.00)
-        assertNearlyEqual(SmoothGradientSmoothing.low.transform(0.57), 0.72)
-        assertNearlyEqual(SmoothGradientSmoothing.low.transform(0.90), 1.00)
-    }
-
-    @Test
-    func smoothingCurveSeparationMatchesVisualExpectation() {
-        let t = 0.57
-        let high = SmoothGradientSmoothing.high.transform(t)
-        let medium = SmoothGradientSmoothing.medium.transform(t)
-        let low = SmoothGradientSmoothing.low.transform(t)
+    func presetSeparationMatchesVisualExpectation() {
+        let t: CGFloat = 0.57
+        let high = SmoothGradientCurvePreset.high.cubic.transform(t)
+        let medium = SmoothGradientCurvePreset.medium.cubic.transform(t)
+        let low = SmoothGradientCurvePreset.low.cubic.transform(t)
         #expect(high < medium)
         #expect(medium < low)
     }
@@ -107,15 +106,29 @@ struct SmoothGradientMathTests {
         #expect(progress?.leftIndex == 1)
         #expect(progress?.rightIndex == 2)
     }
-
-    @Test
-    func locationCountMismatchCanBeHandledByMinimumPairingRule() {
-        let colorsCount = 3
-        let locationsCount = 2
-        #expect(min(colorsCount, locationsCount) == 2)
-    }
 }
 
 private func assertNearlyEqual(_ lhs: Double, _ rhs: Double, eps: Double = 0.000_001) {
     #expect(abs(lhs - rhs) < eps)
+}
+
+private func assertCurveApproximation(
+    _ curve: SmoothGradientCubic,
+    anchors: [(x: CGFloat, y: CGFloat)],
+    maxError: CGFloat,
+    rmseLimit: CGFloat
+) {
+    var sumSquares: CGFloat = 0
+    var observedMaxError: CGFloat = 0
+
+    for anchor in anchors {
+        let value = curve.transform(anchor.x)
+        let error = abs(value - anchor.y)
+        sumSquares += error * error
+        observedMaxError = max(observedMaxError, error)
+    }
+
+    let rmse = sqrt(sumSquares / CGFloat(anchors.count))
+    #expect(observedMaxError <= maxError)
+    #expect(rmse <= rmseLimit)
 }
